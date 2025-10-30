@@ -7,11 +7,19 @@ import jakarta.servlet.http.*;
 
 @WebServlet("/logout")
 public class LogoutServlet extends HttpServlet {
+
     private static final long serialVersionUID = 1L;
 
-    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        HttpSession s = req.getSession(false);
-        if (s != null) s.invalidate();
+    protected void doGet(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+
+        // End the current session (if exists)
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
+        // Redirect to login page
         res.sendRedirect("login.jsp");
     }
 }

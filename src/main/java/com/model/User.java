@@ -1,21 +1,22 @@
 package com.model;
 
-import java.io.Serializable;
-
-public class User implements Serializable {
+public class User {
     private int id;
     private String name;
     private String email;
     private String password;
 
+    // Empty constructor
     public User() {}
 
+    // Constructor without id
     public User(String name, String email, String password) {
         this.name = name;
         this.email = email;
         this.password = password;
     }
 
+    // Getters & Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 

@@ -10,24 +10,27 @@ import com.student.dao.UserDao;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
+
     private static final long serialVersionUID = 1L;
-    private UserDao userDao = new UserDao();
+    private UserDao dao = new UserDao();
 
-    protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        res.sendRedirect("login.jsp");
-    }
+    protected void doPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
 
-    protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        req.setCharacterEncoding("UTF-8");
+        // Get login details
         String email = req.getParameter("email");
         String password = req.getParameter("password");
 
-        User user = userDao.login(email, password);
+        // Check user in database
+        User user = dao.login(email, password);
+
         if (user != null) {
+            // Login success → save in session
             HttpSession session = req.getSession();
-            session.setAttribute("user", user); // store User object
-            res.sendRedirect("list"); // list students
+            session.setAttribute("user", user);
+            res.sendRedirect("list");
         } else {
+            // Login failed → back to login page
             res.sendRedirect("login.jsp?error=1");
         }
     }

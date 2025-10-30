@@ -1,21 +1,22 @@
 package com.model;
 
-import java.io.Serializable;
-
-public class Student implements Serializable {
+public class Student {
     private int id;
     private String name;
     private String course;
     private String email;
 
+    // Default constructor
     public Student() {}
 
+    // Constructor without ID (used for adding new students)
     public Student(String name, String course, String email) {
         this.name = name;
         this.course = course;
         this.email = email;
     }
 
+    // Getters and setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 

@@ -1,52 +1,62 @@
-# Stage 1: Build the Spring Boot application
-# Uses a JDK image from Eclipse Temurin for compilation.
-FROM eclipse-temurin:17-jdk-focal AS builder
+First, organize your working directory like this:
 
-# Set the working directory inside the container for the build stage.
-WORKDIR /app
+yourproject/
+    Dockerfile
+    webapp/
+        WEB-INF/
+          classes/
+          lib/
+          web.xml
+        index.jsp
+Right now, just leave every folders and files empty. This is the skeleton of our Dockerized web application.
 
-# Copy the Gradle wrapper and its directory.
-# This allows you to use the Gradle wrapper (gradlew) inside the container.
-COPY gradlew .
-COPY gradle gradle
+Web application
+First, we should fill some content for our web application. Take your favorite editor and edit these files:
 
-# Copy the build configuration files.
-# build.gradle: Main build script.
-# settings.gradle: Defines multi-project builds if applicable.
-COPY build.gradle settings.gradle .
+yourproject/webapp/WEB-INF/web.xml
+<web-app>
+</web-app>
+It can be empty. Later, you can edit this file as you want.
 
-# Copy the source code.
-# The `src` directory contains your Java source files, resources, etc.
-COPY src src
+yourproject/webapp/index.jsp
+<!doctype html>
+<h1>It works!</h1>
+<%
+  for (int i = 0; i < 5; ++i) {
+      out.println("<p>Hello, world!</p>");
+  }
+%>
+This is just an example; it will produce:
 
-# Make the Gradle wrapper script executable.
-RUN chmod +x gradlew
+<h1>It works!</h1>
+<p>Hello, world!</p><p>Hello, world!</p><p>Hello, world!</p><p>Hello, world!</p><p>Hello, world!</p>
+And that's all for our website. Not too complicated, right?
 
-# Build the Spring Boot application into an executable JAR.
-# `bootJar` task creates the executable JAR.
-# `-x test` skips running tests during the Docker build, which speeds up the build process.
-# This assumes your main JAR will be named `Billing-0.0.1-SNAPSHOT.jar` based on your
-# build.gradle `group` and `version`.
-RUN ./gradlew bootJar -x test
+Dockerfile
+And let's make our Dockerfile. Open yourproject/Dockerfile and copy&paste these:
 
-# Stage 2: Create the final, lightweight runtime image
-# Uses a JRE image from Eclipse Temurin, which is much smaller than a JDK image.
-FROM eclipse-temurin:17-jre-focal
+FROM tomcat:9.0.1-jre8-alpine
 
-# Set the working directory inside the container for the runtime stage.
-WORKDIR /app
+ADD ./webapp /usr/local/tomcat/webapps/webapp
 
-# Copy the executable JAR from the builder stage to the final image.
-# The JAR is copied from `/app/build/libs/Billing-0.0.1-SNAPSHOT.jar` in the builder stage
-# and renamed to `app.jar` in the current stage for simplicity.
-COPY --from=builder /app/build/libs/Billing-0.0.1-SNAPSHOT.jar app.jar
+CMD ["catalina.sh", "run"]
+That's everything we need. Let me explain each line:
 
-# Expose the port on which your Spring Boot application will listen.
-# Based on your application.properties, this is 9090.
-EXPOSE 9090
+Apache Tomcat Image
+FROM tomcat:9.0.1-jre8-alpine
+We use official tomcat:9.0.1-jre8-alpine image for our base image. You can choose any other images you want, like tomcat:8.5.23-jre8. But tomcat:9.0.1-jre8-alpine is the latest release of Apache Tomcat image on Docker Hub now and has much smaller(~113MB) size than tomcat:9.0.1-jre8(~557MB) so I'll stick to use it.
 
-# Define the command to run your application when the container starts.
-# `java -jar app.jar` executes the Spring Boot application.
-# Spring Boot automatically picks up the `server.port` from application.properties
-# and will also respect the `PORT` environment variable set by Render if it's different.
-ENTRYPOINT ["java", "-jar", "app.jar"]
+Copying Website and Start up Tomcat
+ADD ./webapp /usr/local/tomcat/webapps/webapp
+The ADD instruction copies our local files(in our case, yourproject/webapp folder) to container's file system(/usr/local/tomcat/webapps/webapp). I tried to use a WAR file instead of plain source codes, but it didn't work for me for some reason. If someone knows how to pre-compile all the JSP files and copy it into image, please leave a comment.
+
+CMD ["catalina.sh", "run"]
+Finally, the CMD instruction will start up Apache Tomcat, which runs our web application.
+
+Build Docker Image and Run
+Go to yourproject/ in terminal, and type it to build a Docker image:
+
+$ docker build -t mywebapp .
+And then run:
+
+$ docker run --rm -it -p 8888:8080 mywebapp
